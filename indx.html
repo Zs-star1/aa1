@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>الطالب المتفوق 🤖 | روبوت صف أول + نقاط ومكافآت</title>
+<style>
+  :root{
+    --green-25:#f3faf4;
+    --green-50:#e8f5e9;
+    --green-100:#dff5e3;
+    --green-200:#c8ebcf;
+    --green-300:#a9dfb6;
+    --green-400:#81c784;
+    --green-600:#2e7d32;
+    --text:#0b3d2c;
+    --white:#fff;
+    --shadow:0 10px 30px rgba(0,0,0,.07);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family: "Tajawal", system-ui, -apple-system, Segoe UI, Arial;
+    background: linear-gradient(180deg,var(--green-25),var(--green-50));
+    color:var(--text);
+  }
+  header{
+    position:sticky; top:0; z-index:10;
+    background: linear-gradient(90deg,var(--green-300),var(--green-100));
+    box-shadow:var(--shadow);
+    padding:12px 16px;
+  }
+  .wrap{max-width:1100px;margin:0 auto;padding:16px}
+  .brand{
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap
+  }
+  .brand .badge{
+    background:var(--white); color:var(--green-600); font-weight:700;
+    padding:6px 10px; border-radius:999px; box-shadow:var(--shadow); font-size:.9rem
+  }
+  h1{margin:0; font-size:1.4rem}
+  main .grid{
+    display:grid; grid-template-columns: 1.1fr .9fr; gap:18px;
+  }
+  @media (max-width:900px){
+    main .grid{grid-template-columns: 1fr}
+  }
+
+  /* بطاقة الروبوت */
+  .card{
+    background:var(--white); border-radius:18px; padding:18px; box-shadow:var(--shadow);
+  }
+  .bot{
+    display:flex; gap:18px; align-items:center; flex-wrap:wrap;
+  }
+  .bot-avatar{
+    width:120px; height:120px; border-radius:50%;
+    background: radial-gradient(circle at 35% 35%, #b7f4c7, #7adf98);
+    display:grid; place-items:center; box-shadow:var(--shadow);
+  }
+  .bot-avatar svg{width:70%; height:70%}
+  .bubble{
+    flex:1; background:var(--green-25); border:2px dashed var(--green-300);
+    border-radius:16px; padding:14px; line-height:1.9
+  }
+  .bubble b{color:var(--green-600)}
+
+  /* الأزرار */
+  .actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
+  button{
+    border:0; border-radius:12px; padding:10px 14px; cursor:pointer;
+    background:var(--green-300); color:var(--text); font-weight:700;
+    box-shadow:var(--shadow); transition:transform .1s ease, filter .2s ease
+  }
+  button:hover{transform: translateY(-2px)}
+  button.secondary{background:var(--green-100)}
+  button.ghost{background:var(--white); border:2px solid var(--green-300)}
+  button:disabled{opacity:.6; cursor:not-allowed}
+
+  /* النقاط والمكافآت */
+  .score{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    background:var(--green-25); border:2px solid var(--green-100);
+    border-radius:14px; padding:12px; margin-top:12px
+  }
+  .score .pts{
+    font-size:1.15rem; font-weight:800; color:var(--green-600)
+  }
+  .progress{
+    height:10px; background:var(--green-100); border-radius:999px; overflow:hidden; flex:1
+  }
+  .bar{height:100%; width:0%; background:linear-gradient(90deg,#81c784,#4caf50)}
+
+  .rewards{
+    display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; margin-top:14px
+  }
+  @media (max-width:600px){.rewards{grid-template-columns:1fr}}
+  .reward{
+    background:var(--green-25); border:1px solid var(--green-100);
+    border-radius:12px; padding:10px
+  }
+  .reward.locked{opacity:.55; filter:grayscale(.3)}
+  .reward .title{font-weight:800}
+  .reward .need{font-size:.9rem}
+
+  /* صندوق الاختبار */
+  .quiz{
+    background:var(--white); border:2px solid var(--green-100); border-radius:14px; padding:14px; margin-top:14px;
+  }
+  .quiz h3{margin:0 0 8px}
+  .choices{display:grid; gap:8px; margin-top:8px}
+  .choice{
+    background:var(--green-25); border:1px solid var(--green-100); border-radius:10px;
+    padding:10px; cursor:pointer; transition:transform .08s ease
+  }
+  .choice:hover{transform:translateY(-2px)}
+  .choice.correct{border-color:#43a047}
+  .choice.wrong{border-color:#e53935}
+  .quiz .note{margin-top:8px; font-size:.95rem}
+
+  /* لوحة أحداث آخر ما قاله الروبوت */
+  .log{
+    margin-top:14px; background:var(--white); border:2px dashed var(--green-100);
+    border-radius:14px; padding:12px; max-height:220px; overflow:auto
+  }
+  .log h3{margin:0 0 8px}
+  .log p{margin:0 0 6px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap brand" aria-label="شريط علوي">
+    <h1>🤖 الطالب المتفوق — روبوت الفصل</h1>
+    <span class="badge">أهلاً يا بطل! اليوم يوم الإبداع 💫</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="grid">
+    <!-- بطاقة الروبوت والحديث -->
+    <section class="card" aria-labelledby="botTitle">
+      <div class="bot">
+        <div class="bot-avatar" aria-hidden="true">
+          <!-- أيقونة روبوت SVG بسيطة -->
+          <svg viewBox="0 0 64 64" role="img" aria-label="وجه روبوت">
+            <rect x="10" y="18" width="44" height="34" rx="10" fill="#ffffff" />
+            <circle cx="26" cy="35" r="5" fill="#81c784"/>
+            <circle cx="38" cy="35" r="5" fill="#81c784"/>
+            <rect x="22" y="45" width="20" height="4" rx="2" fill="#a9dfb6"/>
+            <rect x="30" y="8" width="4" height="10" rx="2" fill="#ffffff"/>
+            <circle cx="32" cy="8" r="4" fill="#81c784"/>
+          </svg>
+        </div>
+        <div class="bubble" id="bubble">
+          <div id="botTitle" class="sr-only" style="position:absolute;left:-9999px">حديث الروبوت</div>
+          <b>الطالب المتفوق:</b> مرحبًا يا بطل! 👋 جاهز نبدأ يومنا بالحماس؟
+        </div>
+      </div>
+
+      <div class="actions" aria-label="إجراءات">
+        <button id="btnGreet">ترحيب بالفصل</button>
+        <button id="btnTips" class="secondary">نصيحة سريعة</button>
+        <button id="btnQuiz" class="ghost">سؤال سريع (نقاط)</button>
+        <button id="btnClearLog" class="secondary">تنظيف السجل</button>
+      </div>
+
+      <div class="score" aria-label="لوحة النقاط">
+        <div class="pts">نقاطك: <span id="points">0</span></div>
+        <div class="progress" aria-label="شريط التقدم"><div class="bar" id="bar"></div></div>
+        <button id="btnReset" class="ghost" title="إعادة تعيين النقاط">إعادة</button>
+      </div>
+
+      <div class="rewards" aria-label="المكافآت">
+        <div class="reward locked" data-need="5">
+          <div class="title">⭐ نجمة التشجيع</div>
+          <div class="need">تحتاج: 5 نقاط</div>
+        </div>
+        <div class="reward locked" data-need="10">
+          <div class="title">🏅 ملصق «يا بطل»</div>
+          <div class="need">تحتاج: 10 نقاط</div>
+        </div>
+        <div class="reward locked" data-need="20">
+          <div class="title">🎮 اختيار لعبة صفية</div>
+          <div class="need">تحتاج: 20 نقطة</div>
+        </div>
+        <div class="reward locked" data-need="30">
+          <div class="title">📚 وسام «القارئ الصغير»</div>
+          <div class="need">تحتاج: 30 نقطة</div>
+        </div>
+      </div>
+
+      <div class="quiz" id="quizBox" hidden>
+        <h3>سؤال سريع يا بطل ✨</h3>
+        <div id="qText">...</div>
+        <div class="choices" id="choices"></div>
+        <div class="note" id="qNote">أجب إجابة صحيحة لتحصل على +2 نقاط</div>
+      </div>
+
+      <div class="log" aria-label="سجل حديث الروبوت">
+        <h3>آخر ما قاله الروبوت</h3>
+        <div id="logArea"></div>
+      </div>
+    </section>
+
+    <!-- تعليمات سريعة للمعلم -->
+    <aside class="card">
+      <h2 style="margin-top:0">إرشادات للمعلم</h2>
+      <ul style="line-height:2">
+        <li>اضغط «ترحيب بالفصل» في بداية الحصة؛ الروبوت يحيّي الطلاب: «يا بطل» ويشعل الحماس.</li>
+        <li>استخدم «سؤال سريع» لمنح نقاط تشجيعية وإشراك الطلاب.</li>
+        <li>تظهر المكافآت تلقائيًا عند بلوغ النقاط المطلوبة (محفوظة في المتصفح).</li>
+        <li>يمكنك إعادة النقاط من زر «إعادة» متى شئت.</li>
+      </ul>
+      <hr>
+      <h3>أمثلة رسائل تشجيعية</h3>
+      <p>👏 أحسنت يا بطل! فكرة رائعة.</p>
+      <p>🌟 ممتاز! استمرارك يعني تميزك.</p>
+      <p>🚀 خطوة جديدة نحو الإبداع.</p>
+    </aside>
+  </div>
+</main>
+
+<script>
+  // ====== الإعدادات العامة ======
+  const LS_KEY = 'superStudentPoints';
+  const MAX_REWARD = 30; // أعلى مكافأة محددة
+  const bubble = document.getElementById('bubble');
+  const pointsEl = document.getElementById('points');
+  const bar = document.getElementById('bar');
+  const logArea = document.getElementById('logArea');
+  const rewards = [...document.querySelectorAll('.reward')];
+  const quizBox = document.getElementById('quizBox');
+  const qText = document.getElementById('qText');
+  const choicesEl = document.getElementById('choices');
+  const btnGreet = document.getElementById('btnGreet');
+  const btnTips = document.getElementById('btnTips');
+  const btnQuiz = document.getElementById('btnQuiz');
+  const btnReset = document.getElementById('btnReset');
+  const btnClearLog = document.getElementById('btnClearLog');
+
+  // ====== أدوات مساعدة ======
+  function getPoints(){ return parseInt(localStorage.getItem(LS_KEY) || '0', 10); }
+  function setPoints(v){ localStorage.setItem(LS_KEY, String(v)); updateUI(); }
+
+  function addPoints(n, reason=''){
+    const v = Math.max(0, getPoints() + n);
+    localStorage.setItem(LS_KEY, String(v));
+    speak(`أحسنت يا بطل! حصلت على ${n} نقاط.`);
+    log(`(+${n}) نقاط. ${reason}`);
+    updateUI(true);
+  }
+
+  function updateUI(animate=false){
+    const v = getPoints();
+    pointsEl.textContent = v;
+
+    const pct = Math.min(100, Math.round((v / MAX_REWARD) * 100));
+    bar.style.width = pct + '%';
+    if (animate){
+      bar.animate([{width: bar.style.width},{width: bar.style.width}],{duration:250});
+    }
+
+    // فتح/إقفال المكافآت
+    rewards.forEach(r=>{
+      const need = parseInt(r.dataset.need, 10);
+      if (v >= need) r.classList.remove('locked');
+      else r.classList.add('locked');
+    });
+  }
+
+  function setBubble(text){
+    bubble.innerHTML = `<b>الطالب المتفوق:</b> ${text}`;
+  }
+
+  function log(text){
+    const p = document.createElement('p');
+    p.textContent = '• ' + text;
+    logArea.prepend(p);
+  }
+
+  // ====== الصوت (Web Speech API) ======
+  function speak(text){
+    try{
+      const synth = window.speechSynthesis;
+      if (!synth){ setBubble(text); log('الصوت غير مدعوم.'); return; }
+      const utter = new SpeechSynthesisUtterance(text);
+      // تلميح: اختيار صوت عربي إن توفر
+      const arVoice = (synth.getVoices() || []).find(v=>/ar|Arabic/i.test(v.lang));
+      if (arVoice) utter.voice = arVoice;
+      utter.lang = 'ar-SA';
+      utter.rate = 1; utter.pitch = 1; utter.volume = 1;
+      setBubble(text);
+      synth.cancel(); // إلغاء أي قراءة سابقة
+      synth.speak(utter);
+    }catch(e){
+      setBubble(text);
+      log('تعذّر التشغيل الصوتي.');
+    }
+  }
+
+  // ====== رسائل جاهزة ======
+  const tips = [
+    'يا بطل، من يرفع يده أولًا يختار النشاط! 👋',
+    'البطل الحقيقي هو من يحاول، حتى لو أخطأ. 🌟',
+    'هيا بنا نقرأ بصوت واضح ونستمع لزملائنا. 📖',
+    'نرتّب أدواتنا على الطاولة ونبدأ بهدوء. 🧠',
+  ];
+
+  // ====== بنك أسئلة مبسّط للصف الأول ======
+  const QUESTIONS = [
+    { q:'ما الحرف الذي يسبق «ب»؟', choices:['ا','ت','ج'], answer:0 },
+    { q:'كم مجموع 1 + 2 ؟', choices:['1','2','3'], answer:2 },
+    { q:'اختر الكلمة التي تبدأ بحرف م: ', choices:['كتاب','مدرسة','باب'], answer:1 },
+    { q:'كم عدد حروف كلمة «بيت»؟', choices:['2','3','4'], answer:1 },
+    { q:'ما الرقم بعد 4؟', choices:['3','5','2'], answer:1 },
+  ];
+
+  function askQuiz(){
+    quizBox.hidden = false;
+    const item = QUESTIONS[Math.floor(Math.random()*QUESTIONS.length)];
+    qText.textContent = item.q;
+    choicesEl.innerHTML = '';
+    item.choices.forEach((c,i)=>{
+      const div = document.createElement('button');
+      div.type='button';
+      div.className='choice';
+      div.textContent = c;
+      div.addEventListener('click', ()=>{
+        if (i === item.answer){
+          div.classList.add('correct');
+          addPoints(2, 'إجابة صحيحة');
+          speak('إجابة رائعة يا بطل! حصلت على نقطتين.');
+        }else{
+          div.classList.add('wrong');
+          speak('قريبة يا بطل! حاول مرة أخرى.');
+        }
+        // تعطيل بقية الخيارات بعد الإجابة
+        [...choicesEl.children].forEach(b=>b.disabled=true);
+        setTimeout(()=>{ quizBox.hidden = true; }, 1400);
+      });
+      choicesEl.appendChild(div);
+    });
+  }
+
+  // ====== أحداث الأزرار ======
+  btnGreet.addEventListener('click', ()=>{
+    const msg = 'مرحبًا يا بطل! أنا الطالب المتفوق. سنبدأ درسنا بنشاط وحماس، من مستعدّ؟';
+    speak(msg); log('ترحيب بالفصل.');
+  });
+
+  btnTips.addEventListener('click', ()=>{
+    const t = tips[Math.floor(Math.random()*tips.length)];
+    speak(t); log('نصيحة: ' + t);
+  });
+
+  btnQuiz.addEventListener('click', askQuiz);
+
+  btnReset.addEventListener('click', ()=>{
+    if (confirm('إعادة تعيين النقاط؟')){ setPoints(0); log('تمت إعادة التعيين.'); }
+  });
+
+  btnClearLog.addEventListener('click', ()=>{ logArea.innerHTML=''; });
+
+  // ====== منح نقاط يدوية للمعلم (اختياري) ======
+  // بالضغط المزدوج على شريط النقاط يمنح +1
+  document.querySelector('.score').addEventListener('dblclick', ()=> addPoints(1, 'منح المعلم'));
+
+  // ====== إطلاق أولي ======
+  if (Number.isNaN(getPoints())) setPoints(0);
+  updateUI();
+  // تحية تلقائية خفيفة عند الدخول
+  setTimeout(()=> speak('مرحبًا يا بطل! جاهز نبدأ رحلة التعلم؟'), 600);
+</script>
+</body>
+</html>
